@@ -18,15 +18,23 @@ public class NegPipforSwarmUI : Extension
             "negpip",
             "https://github.com/pamparamm/ComfyUI-ppm",
             "pamparamm", // Author
-            "Installs the ppm custom nodes, enabling negpip support.\nDo you wish to install?"
+            AutoInstall: true
         ));
-        ScriptFiles.Add("assets/NegPip.js");
+
+        InstallableFeatures.RegisterInstallableFeature(new(
+            "Krea2NegPip",
+            "krea2negpip",
+            "https://github.com/blue-pen5805/ComfyUI-krea2-negpip",
+            "blue-pen5805", // Author
+            AutoInstall: true
+        ));
 
         ComfyUIBackendExtension.NodeToFeatureMap["CLIPNegPip"] = "negpip";
+        ComfyUIBackendExtension.NodeToFeatureMap["ApplyKrea2NegPiP"] = "negpip";
 
         T2IRegisteredParam<bool> useNegPipParam = T2IParamTypes.Register<bool>(new(
             Name: "Use NegPip",
-            Description: "Enable NegPip. Allows you to use negative weight in the positive prompt.\nOnly supports SD1, SDXL, Anima and Flux.\nNunchaku is not supported.",
+            Description: "Enable NegPip. Allows you to use negative weight in the positive prompt.\nOnly supports SD1, SDXL, Flux, Anima and Krea 2.\nNunchaku is not supported.",
             Default: "false",
             Group: T2IParamTypes.GroupSampling,
             FeatureFlag: "negpip",
@@ -40,11 +48,18 @@ public class NegPipforSwarmUI : Extension
             // NegPip functionality is determined by the base model's compatibility.
             string baseCompatClass = g.CurrentCompatClass();
             string specialFormat = g.FinalLoadedModel?.Metadata?.SpecialFormat;
-            bool isCompatible = g.CurrentCompatClass() is "stable-diffusion-v1" or "stable-diffusion-xl-v1" or "anima" || g.CurrentCompatClass().StartsWith("flux-1")
-            && specialFormat is not "nunchaku" or "nunchaku-fp4";
+            bool isPpmCompatible = g.CurrentCompatClass() is "stable-diffusion-v1" or "stable-diffusion-xl-v1" or "anima" || g.CurrentCompatClass().StartsWith("flux-1");
+            bool isKrea2Compatible = g.CurrentCompatClass() is "krea-2";
+
             if (g.UserInput.TryGet(useNegPipParam, out bool enabled) && enabled)
             {
-                if (isCompatible)
+                if (specialFormat is "nunchaku" or "nunchaku-fp4")
+                {
+                    Logs.Debug($"[NegPip] NegPip disabled as Nunchaku is not supported.");
+                    return;
+                }
+
+                if (isPpmCompatible)
                 {
                     string negPipNodeId = g.CreateNode("CLIPNegPip", new JObject()
                     {
@@ -54,9 +69,19 @@ public class NegPipforSwarmUI : Extension
                     g.LoadingModel = [negPipNodeId, 0]; // Output 0 = MODEL
                     g.LoadingClip = [negPipNodeId, 1];  // Output 1 = CLIP
                 }
+                else if (isKrea2Compatible)
+                {
+                    string negPipNodeId = g.CreateNode("ApplyKrea2NegPiP", new JObject()
+                    {
+                        ["model"] = g.LoadingModel,
+                        ["clip"] = g.LoadingClip
+                    });
+                    g.LoadingModel = [negPipNodeId, 0]; // Output 0 = MODEL
+                    g.LoadingClip = [negPipNodeId, 1];  // Output 1 = CLIP
+                }
                 else
                 {
-                    Logs.Debug($"[NegPip] NegPip disabled as model '{g.FinalLoadedModel?.Name}' (class '{baseCompatClass}') is not in the compatible list (SD1, SDXL, Anima, Flux).");
+                    Logs.Debug($"[NegPip] NegPip disabled as model '{g.FinalLoadedModel?.Name}' (class '{baseCompatClass}') is not in the compatible list (SD1, SDXL, Flux, Anima, Krea 2).");
                 }
             }
         }, priority: -7);
