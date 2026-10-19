@@ -34,7 +34,7 @@ public class NegPipforSwarmUI : Extension
 
         T2IRegisteredParam<bool> useNegPipParam = T2IParamTypes.Register<bool>(new(
             Name: "Use NegPip",
-            Description: "Enable NegPip. Allows you to use negative weight in the positive prompt.\nOnly supports SD1, SDXL, Flux, Anima and Krea 2.\nNunchaku is not supported.",
+            Description: "Allows you to use negative weight in the positive prompt.\nSupported models: SD1, SDXL, Anima, Krea 2, MOSS Image.\nNunchaku is not supported.\nMOSS Image: also enables regular prompt weighting like (word:2).",
             Default: "false",
             Group: T2IParamTypes.GroupSampling,
             FeatureFlag: "negpip",
@@ -48,7 +48,7 @@ public class NegPipforSwarmUI : Extension
             // NegPip functionality is determined by the base model's compatibility.
             string baseCompatClass = g.CurrentCompatClass();
             string specialFormat = g.FinalLoadedModel?.Metadata?.SpecialFormat;
-            bool isPpmCompatible = g.CurrentCompatClass() is "stable-diffusion-v1" or "stable-diffusion-xl-v1" or "anima" || g.CurrentCompatClass().StartsWith("flux-1");
+            bool isPpmCompatible = g.CurrentCompatClass() is "stable-diffusion-v1" or "stable-diffusion-xl-v1" or "anima" or "moss-image";
             bool isKrea2Compatible = g.CurrentCompatClass() is "krea-2";
 
             if (g.UserInput.TryGet(useNegPipParam, out bool enabled) && enabled)
