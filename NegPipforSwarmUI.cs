@@ -34,7 +34,7 @@ public class NegPipforSwarmUI : Extension
 
         T2IRegisteredParam<bool> useNegPipParam = T2IParamTypes.Register<bool>(new(
             Name: "Use NegPip",
-            Description: "Allows you to use negative weight in the positive prompt.\nSupported models: SD1, SDXL, Anima, Krea 2, MOSS Image.\nNunchaku is not supported.\nMOSS Image: also enables regular prompt weighting like (word:2).",
+            Description: "Allows you to use negative weight in the positive prompt.\nSupported models: SD1, SDXL, Anima, Krea 2, MOSS Image.\nMOSS Image: also enables regular prompt weighting like <weight[2]:word>.\nNunchaku is not supported.",
             Default: "false",
             Group: T2IParamTypes.GroupSampling,
             FeatureFlag: "negpip",
