@@ -10,6 +10,9 @@ namespace SwarmExtensions.NegPip;
 // NOTE: Classname must match filename
 public class NegPipforSwarmUI : Extension
 {
+    public static T2IParamGroup NegPipGroup;
+    public static T2IRegisteredParam<bool> UseNegPip;
+
     // OnInit is called when the extension is loaded
     public override void OnInit()
     {
@@ -32,13 +35,20 @@ public class NegPipforSwarmUI : Extension
         ComfyUIBackendExtension.NodeToFeatureMap["CLIPNegPip"] = "negpip";
         ComfyUIBackendExtension.NodeToFeatureMap["ApplyKrea2NegPiP"] = "negpip";
 
-        T2IRegisteredParam<bool> useNegPipParam = T2IParamTypes.Register<bool>(new(
+        NegPipGroup = new(
+            "NegPip",
+            Toggles: false,
+            Open: false,
+            IsAdvanced: false,
+            OrderPriority: -7
+        );
+
+        UseNegPip = T2IParamTypes.Register<bool>(new(
             Name: "Use NegPip",
             Description: "Allows you to use negative weight in the positive prompt.\nSupported models: SD1, SDXL, Anima, Krea 2, MOSS Image.\nMOSS Image: also enables regular prompt weighting like <weight[2]:word>.\nNunchaku is not supported.",
             Default: "false",
-            Group: T2IParamTypes.GroupSampling,
+            Group: NegPipGroup,
             FeatureFlag: "negpip",
-            OrderPriority: 16,
             IgnoreIf: "false"
         ));
 
@@ -51,7 +61,7 @@ public class NegPipforSwarmUI : Extension
             bool isPpmCompatible = g.CurrentCompatClass() is "stable-diffusion-v1" or "stable-diffusion-xl-v1" or "anima" or "moss-image";
             bool isKrea2Compatible = g.CurrentCompatClass() is "krea-2";
 
-            if (g.UserInput.TryGet(useNegPipParam, out bool enabled) && enabled)
+            if (g.UserInput.TryGet(UseNegPip, out bool enabled) && enabled)
             {
                 if (specialFormat is "nunchaku" or "nunchaku-fp4")
                 {
